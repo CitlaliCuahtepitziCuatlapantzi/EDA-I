@@ -1,0 +1,212 @@
+# BÚSQUEDA DEL TESORO SONAR
+
+import random
+import sys
+
+def dibujarTablero(tablero):
+	# Dibuja la estructura de datos del tablero.
+
+	líneah = '   ' #Espacio inicial para los números a lo largo del lado izquierdo del tablero
+	for i in range(1, 6):
+		líneah += (' ' * 9) + str(i)
+	
+	#Imprimer las coordenadas superiores
+	print(líneah)
+	print('   ' + ('0123456789' * 6))
+	print()
+
+	#Imprimir cada una de las 15 filas
+	for i in range(15):
+		#Los números de una sola cifra deben ser precedidos por un espacio extra
+		if i < 10:
+				espacioExtra = ' '
+		else:
+				espacioExtra = ''
+		print('%s%s %s %s' % (espacioExtra, i, obtenerFila(tablero, i), i))
+
+	#Imprime las coordenadas inferiores
+	print()
+	print('   ' + ('0123456789' * 6))
+	print(líneah)
+
+
+def obtenerFila(tablero, fila):
+	# Devuelve la cadena de números de las columnas
+	filaTablero = ''
+	for i in range(60):
+		filaTablero += tablero[i][fila]
+	return filaTablero
+
+def obtenerNuevoTablero():
+	# Crear una nueva estructura de datos para un tablero de 60x15.
+	tablero = []
+	for x in range(60): # la lista principal es una lista de 60 listas
+		tablero.append([])
+		for y in range(15): # cada lista en la lista principal tiene 15 cadenas de un solo caracter
+			# usar diferentes caracteres para el océano para hacerlo más fácil de leer.
+			if random.randint(0, 1) == 0:
+				tablero[x].append('~')
+			else:
+				tablero[x].append('`')
+	return tablero
+
+def obtenerCofresAleatorios(númCofres):
+	# Crear una lista de estructuras de datos cofre (listas de dos ítems con coordenadas x, y)
+	cofres = []
+	for i in range(númCofres):
+		cofres.append([random.randint(0, 59), random.randint(0, 14)])#Agrega a la lista cofres números aleatorios en el rango
+	return cofres
+
+def esMovidaVálida(x, y):
+	# Devuelve True si las coordenadas pertenecen al tablero, de lo contrario False.
+	return x >= 0 and x <= 59 and y >= 0 and y <= 14
+
+def realizarMovida(tablero, cofres, x, y):
+	# Cambia la estructura de datos del tablero agregando un caracter de dispositivo sonar. Elimina los cofres
+	# de la lista de cofres a medida que son encontrados. Devuelve False si la movida no es válida.
+	# En caso contrario, devuelve una cadena con el resultado de esa movida.
+	if not esMovidaVálida(x, y):# llama a la función def esMovidaVálida(x, y)
+		return False
+
+	menorDistancia = 100 # cualquier cofre estará a una distancia menor que 100.
+	for cx, cy in cofres:
+		if abs(cx - x) > abs(cy - y):
+			distancia = abs(cx - x)
+		else:
+			distancia = abs(cy - y)
+			
+		if distancia < menorDistancia: #Para encontrar el cofre más cercano.
+			menorDistancia = distancia
+
+	if menorDistancia == 0:
+		#El sonar cae sobre el cofre
+		cofres.remove([x, y])#Remueve el cofre
+		return "¡\n\nHas encontrado un cofre del tesoro hundido!"
+	else:
+		if menorDistancia < 10:
+			tablero[x][y] = str(menorDistancia)
+			return "\n\nTesoro detectado a una distancia %s del dispositivo sonar." % (menorDistancia)
+		else:
+			tablero[x][y] = 'O'
+			return "\n\nEl sonar no ha detectado nada. Todos los cofres están fuera del alcance del dispositivo."
+
+
+def ingresarMovidaJugador():
+	# Permite al jugador teclear su movida. Devuelve una lista de dos ítems con coordenadas xy.
+	print("\n\n¿Dónde quieres dejar caer el siguiente dispositivo sonar? (0-59 0-14) (o teclea salir)")
+	while True:
+		movida = input()
+		if movida.lower() == "salir":
+			print("\n\n¡Gracias por jugar!")
+			sys.exit()
+
+		movida = movida.split()
+		if len(movida) == 2 and movida[0].isdigit() and movida[1].isdigit() and esMovidaVálida(int(movida[0]), int(movida[1])):
+			return [int(movida[0]), int(movida[1])]
+		print('Ingresa un número de 0 a 59, un espacio, y luego un número de 0 a 14.')
+
+
+def jugarDeNuevo():
+	# Esta función devuelve True si el jugador quiere jugar de nuevo, de lo contrario devuelve False.
+	print("\n\n¿Quieres jugar de nuevo? (sí o no)")
+	return input().lower().startswith('s')#Si respuesta comienza con s
+
+
+def mostrarInstrucciones():
+	print('''\n\nInstrucciones:
+	
+	
+Eres el capitán de Simón,un buque cazador de tesoros.Tu misión es encontrar los
+tres cofres con tesoros perdidos que se hallan ocultos en el océano.
+
+Para jugar, ingresa las coordenadas del punto del océano en que quieres colocar
+un dispositivo sonar. El sonar puede detectar cuál es la distancia al cofre más
+cercano.
+
+		
+Pulsa enter para continuar...''')
+	input()
+
+	print('''
+
+Por ejemplo, aquí hay un cofre  ubicado a una distancia 2 del dispositivo sonar
+
+
+				22222      c = cofre
+				c   2      d =sonar
+				2 d 2
+				2   2
+				22222
+
+
+Los dispositivos  pueden  detectar  cofres  hasta una distancia  de 9, si todos
+los cofres están fuera del alcance, el punto se indicará con un O.
+
+Si un dispositivo  es colocado directamente sobre un cofre del tesoro, has des-
+cubierto  la  ubicación del cofre, y  este  será recogido. El dispositivo sonar 
+permanecerá allí.
+
+Cuando recojas un cofre,  los dispositivos sonar se actualizarán para localizar
+el próximo cofre más cercano.
+
+
+Pulsa enter para continuar...\n\n''')
+	input()
+	print()
+
+import os
+os.system("cls")
+
+print("\n\t\t\tBÚSQUEDA DEL TESORO SONAR\n\n")
+print()
+print("\t\t¿Te gustaría ver las instrucciones? (sí/no)\n\n")
+if input().lower().startswith('s'):#Si respuesta comienza con s
+	mostrarInstrucciones()
+
+while True:
+	# configuración del juego
+	dispositivosSonar = 16
+	elTablero = obtenerNuevoTablero()
+	losCofres = obtenerCofresAleatorios(3)
+	dibujarTablero(elTablero)
+	movidasPrevias = []
+	
+	while dispositivosSonar > 0:
+		# Comienzo de un turno:
+
+		# mostrar el estado de los dispositivos sonar / cofres
+		if dispositivosSonar > 1: extraSsonar = 's'
+		else: extraSsonar = ''
+		if len(losCofres) > 1: extraScofre = 's'
+		else: extraScofre = ''
+		print("\n\n\n\nAún tienes %s dispositivos%s sonar. Falta encontrar %s cofre%s." % (dispositivosSonar, extraSsonar, len(losCofres), extraScofre))
+
+		x, y = ingresarMovidaJugador()
+		movidasPrevias.append([x, y]) # debemos registrar todas las movidas para que los dispositivos sonar puedan ser actualizados.
+
+		resultadoMovida = realizarMovida(elTablero, losCofres, x, y)
+		if resultadoMovida == False:
+			continue
+		else:
+			if resultadoMovida == "\n\n¡Has encontrado uno de los cofres del tesoro!":
+				# actualizar todos los dispositivos sonar presentes en el mapa.
+				for x, y in movidasPrevias:
+					realizarMovida(elTablero, losCofres, x, y)
+			dibujarTablero(elTablero)
+			print(resultadoMovida)
+
+		if len(losCofres) == 0:
+			print("\n\n¡Has encontrado todos los cofres del tesoro!¡Ganaste :)!")
+			break
+
+		dispositivosSonar -= 1
+
+	if dispositivosSonar == 0:
+		print("\n\n¡Ya no tienes dispositivos sonar!")
+		print("\n\nPerdiste :c     Juego terminado.")
+		print("\n\nLos cofres restantes estaban aquí:")
+		for x, y in losCofres:
+			print(' %s, %s' % (x, y))
+
+	if not jugarDeNuevo():
+		sys.exit()
